@@ -214,54 +214,6 @@ Use task dependencies to coordinate without explicit synchronization:
 }
 ```
 
-## Common Pitfalls
-
-### False Sharing
-
-Occurs when threads update variables on the same cache line:
-
-```c
-// Potential false sharing
-int counter[16]; // threads update different elements but potentially same cache line
-
-// Avoid false sharing
-// Pad array to ensure elements fall on different cache lines
-struct padded_int {
-    int value;
-    char padding[64 - sizeof(int)]; // 64 bytes is a common cache line size
-};
-struct padded_int counters[16];
-```
-
-### Deadlocks
-
-Can occur with nested locks or circular dependencies:
-
-```c
-// Potential deadlock
-#pragma omp parallel sections
-{
-    #pragma omp section
-    {
-        omp_set_lock(&lock_a);
-        // Do something
-        omp_set_lock(&lock_b); // May deadlock if another thread has lock_b and wants lock_a
-        // Do something
-        omp_unset_lock(&lock_b);
-        omp_unset_lock(&lock_a);
-    }
-    
-    #pragma omp section
-    {
-        omp_set_lock(&lock_b);
-        // Do something
-        omp_set_lock(&lock_a); // Deadlock!
-        // Do something
-        omp_unset_lock(&lock_a);
-        omp_unset_lock(&lock_b);
-    }
-}
-```
 
 ## Best Practices
 
